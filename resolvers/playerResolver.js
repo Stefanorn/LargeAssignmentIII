@@ -4,6 +4,7 @@ const pickupGame_Player = require('../data/mongoDb').PickupGame_Player;
 const {NotFoundError} = require('../errors');
 const {UserInputError} = require('apollo-server');
 const {ObjectId} = require('mongodb');
+const moment = require('moment');
 module.exports = {
     queries: {
         allPlayers: () => player.find({}),
@@ -26,7 +27,14 @@ module.exports = {
                 return player.findById(args.id);
 
         },
-        removePlayer:  ( parent,args ) => {
+        removePlayer: ( parent,args ) => {
+            /*var {input} = args;
+            var rPlayerGame = await pickupGameDB.findById(input.pickupGameId);
+            let gameEnd = moment(rPlayerGame.end);
+            let timeNow = moment(new Date());
+            if(moment(gameEnd.isBefore(timeNow))){
+                throw new Error('Player can not be removed from games that have already been passed!');
+            }*/
             var r = player.findById(args.id).updateOne(
                 {},
                 {$set: {"deleted": true}},
@@ -44,7 +52,18 @@ module.exports = {
                 throw new NotFoundError();
             }
         },
-        addPlayerToPickupGame: ( parent, args ) => {
+        addPlayerToPickupGame: async ( parent, args ) => {
+            var {input} = args;
+            //var field = await pickupGame_Player.pickupGame(input.pickupGameId);
+            //var field = await pickupGameDB.PickupGame(input.pickupGameId);
+            var pickupGame = await pickupGameDB.findById(input.pickupGameId);
+            let gameEnd = moment(pickupGame.end);
+            let timeNow = moment(new Date());
+
+            if(moment(gameEnd).isBefore(timeNow)){
+                throw new Error('Adding player to pickupgame failed, this game has already passed!');
+            }
+            console.log(moment(gameEnd).isBefore(timeNow));
 
             var inputmdl = {
                 PickupGame: args.input.pickupGameId,
@@ -53,7 +72,14 @@ module.exports = {
             pickupGame_Player.create(inputmdl);
             return pickupGameDB.findById(args.input.pickupGameId);
         },
-        removePlayerFromPickupGame:( parent, args) => {
+        removePlayerFromPickupGame: async ( parent, args) => {
+            var {input} = args;
+            var rPlayerGame = await pickupGameDB.findById(input.pickupGameId);
+            let gameEnd = moment(rPlayerGame.end);
+            let timeNow = moment(new Date());
+            if(moment(gameEnd.isBefore(timeNow))){
+                throw new Error('Player can not be removed from games that have already been passed!');
+            }
             pickupGame_Player.deleteOne({
                 'player': args.input.playerId,
                 'PickupGame': args.input.pickupGameId

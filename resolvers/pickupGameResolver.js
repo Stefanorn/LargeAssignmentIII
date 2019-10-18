@@ -12,7 +12,14 @@ module.exports = {
         pickupGame: (parent, args) => pickUpDb.findById(args.id)
     },
     mutations:{
-        createPickupGame: (parent, args) => {
+        createPickupGame: async (parent, args) => {
+            var {input} = args;
+            var field = await basketBallFieldDb.basketBallField(input.basketballFieldId);
+            //console.log(field);
+            //console.log
+            if(field.status === "CLOSED"){ // checks if field status is closed, and throws a error message if it is
+                throw new Error('createPickupGame failed, basketballField is closed!');
+            }
             var inputMdl = { 
                 host: args.input.hostId,
                 location: args.input.basketballFieldId,
@@ -41,6 +48,8 @@ module.exports = {
     types: {
         PickupGame:{
            location:  parent => { 
+              // console.log(basketBallFieldDb.basketballField(parent.location));
+
               return basketBallFieldDb.basketBallField(parent.location)
              },
             registeredPlayers:  (parent) => {
@@ -64,4 +73,5 @@ module.exports = {
             
         }
     }
-};
+}
+
