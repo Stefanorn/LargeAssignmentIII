@@ -3,6 +3,7 @@ const pickupGameDB = require('../data/mongoDb').PickupGame;
 const pickupGame_Player = require('../data/mongoDb').PickupGame_Player;
 const {NotFoundError} = require('../errors');
 const {UserInputError} = require('apollo-server');
+const {ObjectId} = require('mongodb');
 module.exports = {
     queries: {
         allPlayers: () => player.find({}),
@@ -30,16 +31,19 @@ module.exports = {
             return player.findById(args.id);
         
         },
-        removePlayer:( parent,args ) => {
-            player.findById(args.id).updateOne(
+        removePlayer:  ( parent,args ) => {
+            var r = player.findById(args.id).updateOne(
                 {},
                 {$set: {"deleted": true}},
-                {upsert: false, multi: true},
-                (err, raw) => {
-                    if(err) { throw err};
-                    console.log(raw);
-                });
+                {upsert: false, multi: true}).exec();
+            
+            console.log(r);
+            if( r.nModified === 0){
+                throw new NotFoundError();
+            }
+            else{
                 return true;
+            }
         },
         addPlayerToPickupGame: ( parent, args ) => {
 
@@ -47,7 +51,6 @@ module.exports = {
                 PickupGame: args.input.pickupGameId,
                 player: args.input.playerId
             };
-            console.log(inputmdl);
             pickupGame_Player.create(inputmdl);
             return pickupGameDB.findById(args.input.pickupGameId);
         },
@@ -61,10 +64,27 @@ module.exports = {
     },
     types:{
         Player:{
-            playedGames: async (parent, args) => {
-                var connection = await pickupGame_Player.find({ "player": parent.id});
-                var pickupGames = pickupGameDB.find({"id": connection.pickupGame});
-                return pickupGames;
+            playedGames: (parent) => {
+                
+                var foundPlayers = pickupGame_Player.find({ "player": parent._id})
+                .exec()
+                .then( async (value) =>{
+                    if(value.length){
+                        var ret = [];
+                        
+                        value = JSON.stringify(value);
+                        value = JSON.parse(value);
+
+                        for(var i =0; i < value.length; i++){
+                            ret.push( await pickupGameDB.findOne({"_id": ObjectId(value[i].pickupGame)}).exec());
+                        }
+                        console.log(ret);
+                        return ret;
+                   }
+                   else return [];
+                });
+
+                return foundPlayers;
             },
         }
     }

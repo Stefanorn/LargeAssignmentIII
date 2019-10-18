@@ -33,20 +33,25 @@ module.exports = {
     },
     types: {
         PickupGame:{
-           location: parent => { 
+           location:  parent => { 
               return basketBallFieldDb.basketBallField(parent.location)
              },
-            registeredPlayers:async (parent) => {
-                var foundPlayers = pickupGame_Player.find({ "PickupGame": ObjectId(parent._id)})
+            registeredPlayers:  (parent) => {
+
+                var foundPlayers = pickupGame_Player.find({ "pickupGame": parent._id})
                 .exec()
-                .then(async (d) => {
-                    var p = player.find({_id: d.player}).exec();
-                    console.log(await p);
+                .then( async (value) =>{
+                    if(value.length){
+                        var ret = [];
+                        for(var i =0; i < value.length; i++){
+                            ret.push( await player.findOne({"_id": ObjectId(value[i].player)}).exec());
+                        }
+                        return ret;
+                   }
+                   else return [];
                 });
 
-                console.log(await foundPlayers);
-                var p = player.find({"_id": ObjectId(foundPlayers.player)});
-                return p;
+                return foundPlayers;
             },
             host: parent => { return player.findById(parent.host)},
             
