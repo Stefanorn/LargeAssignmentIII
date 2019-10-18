@@ -12,7 +12,7 @@ module.exports = {
     PickupGame: connection.model('PickupGame', pickupGameSchema),
     PickupGame_Player: connection.model('PickupGame_Player',
      new Schema({
-        PickupGame: { type: Schema.Types.ObjectId, required: true },
-        player: { type: Schema.Types.ObjectId, required: true }
+        player: { type: Schema.Types.ObjectId, required: true },
+        PickupGame: { type: Schema.Types.ObjectId, required: true }
     },))
 };

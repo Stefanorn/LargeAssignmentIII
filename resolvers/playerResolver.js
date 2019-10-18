@@ -27,14 +27,14 @@ module.exports = {
                 return player.findById(args.id);
 
         },
-        removePlayer: ( parent,args ) => {
-            /*var {input} = args;
+        removePlayer: async ( parent,args ) => {
+            var {input} = args;
             var rPlayerGame = await pickupGameDB.findById(input.pickupGameId);
             let gameEnd = moment(rPlayerGame.end);
             let timeNow = moment(new Date());
             if(moment(gameEnd.isBefore(timeNow))){
                 throw new Error('Player can not be removed from games that have already been passed!');
-            }*/
+            }
             var r = player.findById(args.id).updateOne(
                 {},
                 {$set: {"deleted": true}},
@@ -57,12 +57,18 @@ module.exports = {
             //var field = await pickupGame_Player.pickupGame(input.pickupGameId);
             //var field = await pickupGameDB.PickupGame(input.pickupGameId);
             var pickupGame = await pickupGameDB.findById(input.pickupGameId);
+            //var pickupPlayer = await pickupGameDB.findById(input.playerId); //check if player is listed
             let gameEnd = moment(pickupGame.end);
             let timeNow = moment(new Date());
+            
+            
+            //console.log(pickupPlayer);
 
             if(moment(gameEnd).isBefore(timeNow)){
                 throw new Error('Adding player to pickupgame failed, this game has already passed!');
             }
+            //Players cannot be registered more than once to the same pickup game
+            
             console.log(moment(gameEnd).isBefore(timeNow));
 
             var inputmdl = {
@@ -80,6 +86,7 @@ module.exports = {
             if(moment(gameEnd.isBefore(timeNow))){
                 throw new Error('Player can not be removed from games that have already been passed!');
             }
+
             pickupGame_Player.deleteOne({
                 'player': args.input.playerId,
                 'PickupGame': args.input.pickupGameId
