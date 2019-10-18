@@ -18,31 +18,30 @@ module.exports = {
         },
         updatePlayer: ( parent, args ) => {
             
-            player.findById(args.id).updateOne(
+            var r = player.findById(args.id).updateOne(
                 {},
-                { $set: {"name": args.input.name}}, 
-                (err,raw) => {
-                    if(err){ console.log(" whant to throw new NotFoundError(); ");
- }
-                    if(raw.nModified === 0){
-                        console.log(" whant to throw new NotFoundError(); ");
-                    }
-                });
-            return player.findById(args.id);
-        
+                { $set: {"name": args.input.name}})
+                 .exec();
+
+                return player.findById(args.id);
+
         },
         removePlayer:  ( parent,args ) => {
             var r = player.findById(args.id).updateOne(
                 {},
                 {$set: {"deleted": true}},
-                {upsert: false, multi: true}).exec();
-            
-            console.log(r);
-            if( r.nModified === 0){
-                throw new NotFoundError();
+                {upsert: false, multi: true})
+                .exec()
+                .then((raw, err) => {
+                    console.log(err);
+                      if (err){ return false} 
+                      if(raw.nModified){return true} 
+                      return false; });
+            if(r == true){
+                return true;
             }
             else{
-                return true;
+                throw new NotFoundError();
             }
         },
         addPlayerToPickupGame: ( parent, args ) => {

@@ -3,6 +3,7 @@ const basketBallFieldDb = require('../services/basketballFieldService');
 const player = require('../data/mongoDb').Player;
 const pickupGame_Player = require('../data/mongoDb').PickupGame_Player;
 var {ObjectId} = require('mongodb');
+const {NotFoundError} = require('../errors');
 
 
 module.exports = {
@@ -19,16 +20,22 @@ module.exports = {
             return pickUpDb.create(inputMdl);
         },
         removePickupGame:(parent,args) =>{
-            pickUpDb.findById(args.id).updateOne(
+            var r = pickUpDb.findById(args.id).updateOne(
                 {},
                 { $set: { "deleted": true}},
-                {upsert: false, multi: true},
-                (err,raw) =>{
-                if(err){
-                    throw err;
-                }
-            });
-            return true;
+                {upsert: false, multi: true})
+                .exec()
+                .then((raw, err) => {
+                    console.log(raw);
+                      if (err){ return false} 
+                      if(raw.nModified != 0){return true} 
+                      return false; });
+            if(r == true){
+                return true;
+            }
+            else{
+                throw new NotFoundError();
+            }
         }
     },
     types: {
